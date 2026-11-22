@@ -1,0 +1,15 @@
+{
+  "id": "./",
+  "name": "SecPath · Cybersecurity Learning",
+  "short_name": "SecPath",
+  "description": "Group 7's mobile learning app for Cloud Security and IAS 2",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#100e19",
+  "background_color": "#100e19",
+  "icons": [
+    { "src": "./assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
