@@ -1,8 +1,11 @@
-const cacheName = "secpath-v1";
+const cacheName = "secpath-v5";
 const precache = [
-  "./", "./index.html", "./styles.css", "./app.js", "./courses.js", "./config.js",
+  "./", "./index.html", "./styles.css", "./app.js", "./courses.js", "./lessons.js", "./config.js",
   "./manifest.webmanifest", "./assets/icon-192.png", "./assets/icon-512.png",
-  "./assets/mascot.webp", "./manuals/cloud-deployment-exercise.pdf", "./manuals/snort-exercise.pdf"
+  "./assets/cloud-models.webp", "./assets/cloud-publish.webp",
+  "./assets/snort-monitoring.webp", "./assets/snort-alert.webp",
+  "./assets/mascot.webp", "./manuals/cloud-deployment-exercise.pdf", "./manuals/snort-exercise.pdf",
+  "./manuals/cloud-starter/", "./videos/netlify.webp", "./videos/github-pages.webp", "./videos/snort.webp"
 ];
 
 self.addEventListener("install", (event) => {
@@ -21,7 +24,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET" || !request.url.startsWith(self.registration.scope)) return;
-  if (request.headers.has("range")) return;
+  if (request.destination === "video" || request.headers.has("range")) return;
   event.respondWith((async () => {
     const cache = await caches.open(cacheName);
     const url = new URL(request.url);

@@ -23,7 +23,7 @@ const icon = (name, size = 20) => `<svg width="${size}" height="${size}" viewBox
 const courseList = Object.values(courses);
 const sections = [
   ["discussion", "Discussion", "book", "Read the lesson"],
-  ["demo", "Demo", "play", "Try the simulation"],
+  ["demo", "Demo", "play", "Watch the video demonstrations"],
   ["quiz", "Quiz", "quiz", "Answer 10 questions"],
   ["exercise", "Exercise", "file", "Open the manual"]
 ];
@@ -36,7 +36,6 @@ try {
 } catch {
   // Learning sessions can still run without persistent storage.
 }
-let demo = { provider: "Netlify", stage: 0, packet: 0, checked: false };
 let installEvent;
 let route = { page: "home" };
 
@@ -99,7 +98,7 @@ function home() {
     <div class="hero-copy">
       <span class="eyebrow hero-label">${icon("bolt", 17)} GROUP 7 LEARNING LAB</span>
       <h1>Build your<br>security <span>skills.</span></h1>
-      <p>Explore Cloud Security and IAS 2 with hands-on demos, quick quizzes, and guided exercises.</p>
+      <p>Explore Cloud Security and IAS 2 with video demos, quick quizzes, and guided exercises.</p>
       <a class="button primary hero-cta" href="#/courses">${icon("book", 19)} Browse courses</a>
     </div>
     <div class="hero-art" aria-hidden="true">
@@ -152,55 +151,44 @@ function overview(course) {
     </a>`).join("")}</div></section>`;
 }
 
+function lessonCard({ title, overview, image, details, example }, index) {
+  return `<details class="lesson" ${index === 0 ? "open" : ""}>
+    <summary>${title}</summary>
+    <div class="lesson-body">
+      <p class="lesson-overview">${overview}</p>
+      ${image ? `<figure class="lesson-figure">
+        <img src="./assets/${image.file}" alt="${image.alt}" width="1000" height="500" ${index ? 'loading="lazy"' : ""} decoding="async">
+        <figcaption>${image.caption}</figcaption>
+      </figure>` : ""}
+      <dl class="lesson-points">${details.map(([label, description]) => `<div><dt>${label}</dt><dd>${description}</dd></div>`).join("")}</dl>
+      <aside class="lesson-example"><strong>Example</strong><p>${example}</p></aside>
+    </div>
+  </details>`;
+}
+
 function discussion(course) {
-  return `<section class="activity-content"><div class="section-heading"><div><h2>Discussion</h2><p>Key concepts from the Group 7 presentation.</p></div></div>
-    <div class="lesson-list">${course.lessons.map(([title, body], index) => `<details class="lesson" ${index === 0 ? "open" : ""}><summary>${title}</summary><p>${body}</p></details>`).join("")}</div>
+  const source = course.id === "cloud"
+    ? '<a href="https://csrc.nist.gov/pubs/sp/800/145/final" target="_blank" rel="noopener noreferrer">NIST’s definition of cloud computing</a>'
+    : '<a href="https://docs.snort.org/rules/" target="_blank" rel="noopener noreferrer">Snort rule-writing guide</a>';
+  return `<section class="activity-content"><div class="section-heading"><div><h2>Discussion</h2><p>Explore ${course.lessons.length} lessons with explanations and examples.</p></div></div>
+    <div class="lesson-list">${course.lessons.map(lessonCard).join("")}</div>
+    <p class="lesson-source">Further reading · ${source}</p>
     <div class="actions">${record(course).completed.discussion ? `<span class="completion-status">${icon("check", 18)} Discussion completed</span>` : `<button class="button primary" data-action="complete-discussion">${icon("check", 18)} Mark discussion complete</button>`}<a class="button secondary" href="#/${course.id}/demo">Open demo</a></div></section>`;
 }
 
-const deploySteps = [
-  ["Prepare your website", "Create an index.html file and open it locally to confirm the page works."],
-  ["Publish the files", "Upload the folder containing index.html to Netlify Drop.", "Upload index.html to your repository, then configure Pages to publish from the root of the main branch."],
-  ["Verify the deployment", "Open the published URL and check that the page and its Test Website button work."]
-];
-
-function cloudDemo() {
-  const [title, netlify, github] = deploySteps[Math.min(demo.stage, 2)];
-  const done = demo.stage === 3;
-  return `<div class="demo-panel">
-    <div class="segmented" aria-label="Hosting provider">${["Netlify", "GitHub Pages"].map((provider) => `<button data-action="provider" data-value="${provider}" aria-pressed="${demo.provider === provider}">${provider}</button>`).join("")}</div>
-    <div class="demo-stage"><span class="eyebrow">${done ? "DEPLOYMENT VERIFIED" : `STEP ${demo.stage + 1} OF 3`}</span><h3>${done ? "Your site is live in the simulation" : title}</h3><p>${done ? "The browser loaded index.html and the sample button responded." : (demo.provider === "GitHub Pages" && github ? github : netlify)}</p></div>
-    <div class="console"><div class="console-head">${icon("terminal", 18)} ${demo.provider}</div><pre>${[
-      "✓ Found index.html\n✓ Page passed the local preview check.",
-      "✓ index.html uploaded\n✓ Static site published",
-      "GET /index.html → 200 OK\n✓ Test Website button responded"
-    ].slice(0, demo.stage).join("\n\n") || "Ready to run a local preview."}</pre></div>
-    <div class="actions"><button class="button primary" data-action="${done ? "reset-demo" : "deploy-step"}">${done ? "Run again" : ["Run local preview", "Simulate publish", "Verify site"][demo.stage]}</button></div>
-  </div>`;
-}
-
-const packets = [
-  ["ICMP echo request", "ICMP type 8", "Echo requests match the rule, which produces an alert."],
-  ["ICMP echo reply", "ICMP type 0", "The protocol matches, but the rule only selects type 8."],
-  ["UDP DNS request", "UDP port 53", "The rule selects ICMP traffic, so it skips this UDP packet."]
-];
-
-function snortDemo() {
-  const [name, detail, result] = packets[demo.packet];
-  const alert = demo.packet === 0;
-  return `<div class="demo-panel">
-    <div class="console"><div class="console-head">${icon("terminal", 18)} Detection rule</div><pre>alert icmp any any -&gt; any any (msg:"ICMP Ping Request Detected"; itype:8; sid:1000001; rev:1;)</pre></div>
-    <label for="packet" class="field-label">Sample packet</label><select id="packet">${packets.map(([label], index) => `<option value="${index}" ${index === demo.packet ? "selected" : ""}>${label}</option>`).join("")}</select>
-    <div class="demo-stage" aria-live="polite"><span class="eyebrow">${detail}</span><h3>${demo.checked ? (alert ? "Alert generated" : "No match") : name}</h3><p>${demo.checked ? result : "Inspect a sample packet and compare it with the rule."}</p>
-      ${demo.checked && alert ? '<code class="alert-sample">[1:1000001:1] ICMP Ping Request Detected</code>' : ""}
-    </div><div class="actions"><button class="button primary" data-action="inspect-packet">${icon("play", 17)} Inspect packet</button></div>
-  </div>`;
-}
-
 function demoPage(course) {
-  return `<section class="activity-content"><div class="section-heading"><div><h2>${course.demoTitle}</h2><p>${course.id === "cloud" ? "Walk through a deployment without creating a hosting account." : "See how Snort evaluates sample traffic against an ICMP rule."}</p></div><span class="count-tag">Simulation</span></div>
-    ${course.id === "cloud" ? cloudDemo() : snortDemo()}
-    ${record(course).completed.demo ? `<div class="actions"><a class="button secondary" href="#/${course.id}/quiz">Take the quiz</a></div>` : ""}
+  const completed = record(course).completed.demo;
+  return `<section class="activity-content">
+    <div class="section-heading"><h2>${course.demoTitle}</h2></div>
+    <div class="demo-videos">${course.demoVideos.map(({ file, title, duration }) => `<article class="panel demo-video">
+      <div class="demo-video-heading"><h3 id="video-${file}">${title}</h3><span>${duration}</span></div>
+      <video controls playsinline preload="none" poster="./videos/${file}.webp" src="./videos/${file}.mp4" aria-labelledby="video-${file}"></video>
+      <p class="demo-video-error" role="status"></p>
+    </article>`).join("")}</div>
+    <div class="actions">
+      ${completed ? `<span class="completion-status">${icon("check", 18)} Demo completed</span>` : `<button class="button primary" data-action="complete-demo">${icon("check", 18)} Mark demo complete</button>`}
+      <a class="button secondary" href="#/${course.id}/quiz">Take the quiz</a>
+    </div>
   </section>`;
 }
 
@@ -211,6 +199,14 @@ function exercise(course) {
   const deliverables = course.deliverables.map((item) => `<li>${item}</li>`).join("");
   return `<section class="activity-content exercise-content"><div class="section-heading"><div><h2>Exercise manual</h2><p>${course.manualDescription}</p></div></div>
     <div class="manual-panel"><span class="activity-icon">${icon("file", 24)}</span><div><h3>${course.manualTitle}</h3><p>Group 7 exercise manual · PDF</p></div><a class="button secondary" href="./manuals/${course.manual}" download>${icon("download", 18)} Download manual</a></div>
+    ${course.id === "cloud" ? `<div class="panel exercise-starter">
+      <h3>Starter website</h3>
+      <p>Use this index.html file for the Netlify or GitHub Pages steps in the manual. After publishing, open your own site URL and click Test Website to verify it works.</p>
+      <div class="actions">
+        <a class="button secondary" href="./manuals/cloud-starter/" download="index.html">${icon("download", 18)} Download index.html</a>
+        <a class="button secondary" href="./manuals/cloud-starter/" target="_blank" rel="noopener">${icon("play", 18)} Preview starter</a>
+      </div>
+    </div>` : ""}
     <div class="panel submission"><h3>Submit your exercise</h3><p>Prepare the following for your Google Forms upload.</p><ul>${deliverables}</ul>
       <div class="actions">
         ${form && online ? `<a class="button primary" href="${form}" target="_blank" rel="noopener noreferrer">${icon("upload", 18)} Open Google Form</a>` : `<button class="button primary" disabled>${icon("upload", 18)} Open Google Form</button>`}
@@ -237,7 +233,11 @@ function quiz(course) {
   const choice = answers[index];
   const revealed = choice !== undefined;
   return `<section class="quiz-panel active-quiz">
-    <div class="quiz-header"><img src="./assets/mascot.webp" alt="" width="59" height="68"><span class="course-icon ${course.id}">${icon(course.icon, 22)}</span><span class="quiz-count">Question ${index + 1} of ${total}</span></div>
+    <div class="quiz-header">
+      <img src="./assets/mascot.webp" alt="" width="59" height="68">
+      <span class="course-icon ${course.id}">${icon(course.id === "cloud" ? "quiz" : course.icon, 22)}</span>
+      <span class="quiz-count">Question ${index + 1} of ${total}</span>
+    </div>
     <progress class="meter quiz-meter" value="${index + Number(revealed)}" max="${total}" aria-label="Questions answered"></progress>
     <div class="question-card"><h2 data-question>${question}</h2></div>
     <div class="quiz-options">${options.map((option, optionIndex) => {
@@ -257,9 +257,6 @@ function render() {
   const [, page = "home", section, extra] = location.hash.slice(1).split("/");
   const course = Object.hasOwn(courses, page) && !extra ? courses[page] : null;
   const currentSection = course && sections.some(([id]) => id === section) ? section : null;
-  if (course !== route.course || currentSection !== route.section) {
-    demo = { provider: "Netlify", stage: 0, packet: 0, checked: false };
-  }
   route = { page, course, section: currentSection };
   renderNav();
   document.title = course ? `${course.name} · SecPath` : "SecPath · Cybersecurity Learning";
@@ -298,32 +295,17 @@ document.addEventListener("click", async (event) => {
   let focus = `[data-action="${action}"]`;
   switch (action) {
     case "complete-discussion":
-      setComplete(course, "discussion");
-      main.querySelector('[href$="/discussion"]')?.insertAdjacentHTML("beforeend", '<i class="done-dot" aria-label="completed"></i>');
-      button.outerHTML = `<span class="completion-status" role="status">${icon("check", 18)} Discussion completed</span>`;
+    case "complete-demo": {
+      const section = action === "complete-demo" ? "demo" : "discussion";
+      const label = section === "demo" ? "Demo" : "Discussion";
+      setComplete(course, section);
+      main.querySelector(`[href$="/${section}"]`)?.insertAdjacentHTML("beforeend", '<i class="done-dot" aria-label="completed"></i>');
+      button.outerHTML = `<span class="completion-status" role="status">${icon("check", 18)} ${label} completed</span>`;
       main.querySelector(".activity-content .actions a")?.focus({ preventScroll: true });
       return;
+    }
     case "complete-exercise":
       setComplete(course, "exercise");
-      break;
-    case "provider":
-      demo = { ...demo, provider: value, stage: 0 };
-      focus = `[data-action="provider"][aria-pressed="true"]`;
-      break;
-    case "deploy-step":
-      demo.stage += 1;
-      if (demo.stage === 3) {
-        setComplete(course, "demo");
-        focus = '[data-action="reset-demo"]';
-      }
-      break;
-    case "reset-demo":
-      demo.stage = 0;
-      focus = '[data-action="deploy-step"]';
-      break;
-    case "inspect-packet":
-      demo.checked = true;
-      if (demo.packet === 0) setComplete(course, "demo");
       break;
     case "start-quiz":
       state.quiz = { index: 0, answers: [], finished: false };
@@ -363,13 +345,20 @@ document.addEventListener("click", async (event) => {
   }
 });
 
-document.addEventListener("change", (event) => {
-  if (event.target.id !== "packet") return;
-  demo.packet = Number(event.target.value);
-  demo.checked = false;
-  render();
-  document.querySelector("#packet").focus({ preventScroll: true });
-});
+main.addEventListener("play", (event) => {
+  if (event.target.tagName !== "VIDEO") return;
+  main.querySelectorAll(".demo-video video").forEach((video) => {
+    if (video !== event.target) video.pause();
+  });
+}, true);
+
+main.addEventListener("error", (event) => {
+  if (event.target.tagName !== "VIDEO") return;
+  const status = event.target.closest(".demo-video")?.querySelector(".demo-video-error");
+  if (status) status.textContent = navigator.onLine
+    ? "The video could not load. Reload the page to try again."
+    : "Reconnect to the internet and reload the page to watch the video.";
+}, true);
 
 window.addEventListener("hashchange", () => {
   if (location.hash === "#main") return;

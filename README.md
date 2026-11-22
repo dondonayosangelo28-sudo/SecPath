@@ -1,16 +1,19 @@
 # SecPath
 
-Group 7’s installable, mobile-first learning app for Cloud Security and IAS 2. Each course has a discussion, an interactive simulation, a ten-question quiz, and the original downloadable exercise manual. Quiz attempts and activity progress are stored in the current browser.
+Group 7’s installable, mobile-first learning app for Cloud Security and IAS 2. Each course has a discussion, demonstration videos, a ten-question quiz, and the original downloadable exercise manual. Quiz attempts and activity progress are stored in the current browser.
 
 ## Run locally
 
-From this folder, start a static server:
+With Node.js and npm installed, open PowerShell in the SecPath project folder and run:
 
 ```powershell
-python -m http.server 4173 --bind 127.0.0.1 --directory dist
+npm.cmd install
+npm.cmd run dev
 ```
 
-Open [SecPath on localhost](http://localhost:4173). To install it on a phone, open its hosted HTTPS URL in the mobile browser and select **Install app** or **Add to Home Screen**. Visit the app online once so the service worker can save the coursework and manuals for offline use.
+Open [SecPath on localhost](http://127.0.0.1:4173). Keep the terminal running while you use the app. Press **Ctrl+C** to stop the server. After the first install, you can start the app with just `npm.cmd run dev` or `npm.cmd start`.
+
+To install SecPath on a phone, open its hosted HTTPS URL in the mobile browser and select **Install app** or **Add to Home Screen**. Visit the app online once so the service worker can save the lessons and manuals for offline use. The hosted app streams demo videos on demand.
 
 ## Google Forms submissions
 
